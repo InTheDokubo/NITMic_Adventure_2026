@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity Web Player | ゆうしゃにとみくのぼうけん(修正版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        input, textarea {
+            font-size: 16px !important;
+            touch-action: auto !important;
+            -webkit-user-select: text !important;
+            user-select: text !important;
+        }
+
+        #unity-container {
+            position: relative;
+        }
+
+        #unity-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background-color: #231F20;
+            outline: none;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+        }
+
+        #loading-cover {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-family: sans-serif;
+            z-index: 10;
+        }
+        #progress-bar-empty {
+            width: 60%;
+            height: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        #progress-bar-full {
+            width: 0%;
+            height: 100%;
+            background-color: #00ff00;
+            transition: width 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <div id="unity-container">
+        <canvas id="unity-canvas" width="1080" height="1920" tabindex="-1"></canvas>
+        <div id="loading-cover">
+            <div>Loading...</div>
+            <div id="progress-bar-empty">
+                <div id="progress-bar-full"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var buildUrl = "Build";
+        var loaderUrl = buildUrl + "/Build2.loader.js";
+        var config = {
+            dataUrl: buildUrl + "/Build2.data",
+            frameworkUrl: buildUrl + "/Build2.framework.js",
+            codeUrl: buildUrl + "/Build2.wasm",
+            streamingAssetsUrl: "StreamingAssets",
+            companyName: "DefaultCompany",
+            productName: "ゆうしゃにとみくのぼうけん(修正版)",
+            productVersion: "1.0",
+            matchWebGLToCanvasSize: false
+        };
+
+        function resizeContainer() {
+            var container = document.getElementById('unity-container');
+            var windowWidth = window.innerWidth;
+            var windowHeight = window.innerHeight;
+            var gameRatio = 1080 / 1920;
+            var windowRatio = windowWidth / windowHeight;
+
+            if (windowRatio < gameRatio) {
+                container.style.width = windowWidth + 'px';
+                container.style.height = Math.floor(windowWidth / gameRatio) + 'px';
+            } else {
+                container.style.width = Math.floor(windowHeight * gameRatio) + 'px';
+                container.style.height = windowHeight + 'px';
+            }
+            window.scrollTo(0, 0);
+        }
+
+        window.addEventListener('resize', resizeContainer);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resizeContainer, 100); 
+        });
+        resizeContainer();
+
+        var canvas = document.querySelector("#unity-canvas");
+        var loadingCover = document.querySelector("#loading-cover");
+        var progressBarFull = document.querySelector("#progress-bar-full");
+
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = () => {
+            createUnityInstance(canvas, config, (progress) => {
+                progressBarFull.style.width = 100 * progress + "%";
+            }).then((unityInstance) => {
+                loadingCover.style.display = "none";
+                document.body.addEventListener('touchmove', function(e) {
+                    if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+            }).catch((message) => {
+                console.error(message);
+            });
+        };
+        document.body.appendChild(script);
+    </script>
+</body>
+</html>
